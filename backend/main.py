@@ -21,7 +21,7 @@ class SignUpOut(BaseModel):
 
 @app.post("/sign_up", response_model=SignUpOut)
 async def sign_up(account: SignUpBase, db: db_dependency):
-    account = models.Accounts(name=account.username, password=get_password_hash(account.password))
+    account = models.Account(name=account.username, password=get_password_hash(account.password))
     db.add(account)
     db.commit()
     db.refresh(account)
