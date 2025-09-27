@@ -1,9 +1,16 @@
 from passlib.context import CryptContext
 from typing import Annotated
-from fastapi import Depends
+from fastapi import Depends, HTTPException
 from sqlalchemy.orm import Session
 from database import get_db
 import models
+import os
+from datetime import datetime, timedelta, timezone
+from jose import jwt, JWTError
+
+JWT_SECRET = os.getenv("JWT_SECRET")
+ALGORITHM = os.getenv("ALGORITHM")
+ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 db_dependency = Annotated[Session, Depends(get_db)]
@@ -15,4 +22,18 @@ def verify_password(plain_password, hashed_password):
     return pwd_context.verify(plain_password, hashed_password)
 
 def get_user_by_id(user_id: int, db: db_dependency):
-    return db.query(models.Accounts).filter(user_id=user_id).first()
+    return db.query(models.Account).filter(user_id=user_id).first()
+
+def get_user_by_username(db: Session, username: str,):
+    return db.query(models.Account).filter(models.Account.username == username).first()
+
+def create_access_token(data: dict, expires_delta: timedelta | None = None):
+    to_encode = data.copy()
+    if expires_delta:
+        expire = datetime.now(timezone.utc) + expires_delta
+    else:
+        expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+
+    to_encode.update({"exp" : expire})
+    encoded_jwt = jwt.encode(to_encode, JWT_SECRET, algorithm=ALGORITHM)
+    return encoded_jwt

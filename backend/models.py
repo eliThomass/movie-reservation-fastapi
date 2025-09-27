@@ -2,7 +2,7 @@ from sqlalchemy import (Boolean, Column, ForeignKey, Integer, String,
                         DateTime, Index, Computed, Text, UniqueConstraint, Enum
                         )
 from sqlalchemy.sql import func, column
-from sqlalchemy.dialects.postgresql import TSTZRANGE, ExcludeConstraint
+from sqlalchemy.dialects.postgresql import ExcludeConstraint
 import enum
 from sqlalchemy.orm import relationship
 from database import Base
@@ -51,9 +51,9 @@ class Showtime(Base):
     __table_args__ = (
         ExcludeConstraint(
             ('audit_id', '='),
-            (TSTZRANGE(column('start_at'), column('end_at'), '()'), '&&'),
+            (func.tstzrange(column('start_at'), column('end_at'), '()'), '&&'),
             name='no_overlap_in_auditorium'
-        )
+        ),
     )
 
     movie = relationship("Movie", back_populates="showtimes")
@@ -65,7 +65,7 @@ class Auditorium(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     seat_rows = Column(Integer, nullable=False)
     seat_cols = Column(Integer, nullable=False)
-    capacity = Column(Integer, Computed('seat_rows * seat_cols'), persisted=True)
+    capacity = Column(Integer, Computed('seat_rows * seat_cols', persisted=True))
 
 class Seat(Base):
     __tablename__ = "seat"
@@ -107,7 +107,7 @@ class ReservationSeat(Base):
     price_cents = Column(Integer, nullable=False, server_default='0')
 
     __table_args__ = (
-        UniqueConstraint('showtime_id', 'seat_id', name='uq_res_seat_showtime')
+        UniqueConstraint('showtime_id', 'seat_id', name='uq_res_seat_showtime'),
     )
 
 Index("idx_showtime_movie_id", Showtime.movie_id)

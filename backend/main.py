@@ -19,6 +19,13 @@ class SignUpOut(BaseModel):
     password: str
     created_at: str
 
+class SignInOut(BaseModel):
+    pass
+
+class Token(BaseModel):
+    pass
+
+
 @app.post("/sign_up", response_model=SignUpOut)
 async def sign_up(account: SignUpBase, db: db_dependency):
     account = models.Account(name=account.username, password=get_password_hash(account.password))
@@ -32,7 +39,10 @@ async def sign_up(account: SignUpBase, db: db_dependency):
         "created_at": account.created_at.isoformat()
     }
 
-@app.get("/sign_in")
-async def sign_in(name: str, password: str, db: db_dependency):
+@app.get("/sign_in", response_model=Token)
+async def sign_in(account: SignUpBase, db: db_dependency):
+    account = db.query(models.Account).filter()
+    hashed_password = get_password_hash(password)
+
     return {}
     
